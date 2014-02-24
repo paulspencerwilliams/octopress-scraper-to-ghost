@@ -1,6 +1,6 @@
 (ns octopress-scraper-to-ghost.core)
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (str x "Hello, World!"))
+(defn get-ghost-json [url] 
+  "ghost-json"
+)
+ 

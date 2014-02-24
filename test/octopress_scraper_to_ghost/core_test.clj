@@ -2,4 +2,5 @@
   (:use expectations 
         [octopress-scraper-to-ghost.core :refer :all]))
 
-(expect "paul Hello, World!" (foo "paul "))
+(expect "ghost-json" 
+        (get-ghost-json "http://thephotographic.me.uk/blog/archives"))
