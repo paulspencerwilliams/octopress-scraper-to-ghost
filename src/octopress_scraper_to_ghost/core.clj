@@ -1,6 +1,6 @@
 (ns octopress-scraper-to-ghost.core
   (:require [net.cgrand.enlive-html :as html]
-            [clj-time.format]))
+            [clj-time.format :as date]))
 
 (def archive-relative "/blog/archives")
 
@@ -16,7 +16,7 @@
         body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]
      { 
        :heading (html/text heading)
-       :publish-time (:datetime (:attrs time-published))
+       :publish-time (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published)))
        :html-content (apply str (html/emit* body))}))
 
 (defn jsonify-blog 
