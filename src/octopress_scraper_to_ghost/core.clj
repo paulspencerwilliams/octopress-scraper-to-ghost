@@ -10,9 +10,9 @@
   (str blog-url (:href (:attrs relative-a-tag))))
 
 (defn extract-blog-post [blog-post-url]
-  (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))]
-     heading))
-
+  (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
+        body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]
+     (str (html/text heading) (apply str (html/emit* body)))))
 
 (defn jsonify-blog 
   ([blog-url] (jsonify-blog blog-url (take 1 (html/select (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a])) ""))
