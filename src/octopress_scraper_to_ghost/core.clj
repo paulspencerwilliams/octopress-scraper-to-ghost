@@ -16,20 +16,24 @@
   (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
         time-published (first(html/select (fetch-url blog-post-url) [:time]))
         body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]  blog-post-template 
+    (merge
+      blog-post-template 
     { 
      :title (html/text heading)
+     :_meta_title (html/text heading)
      :slug (html/text heading)
      :published_at (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published)))
-     :html (apply str (html/emit* body))}))
+     :html (apply str (html/emit* body))})
+    ))
 
 (defn jsonify-blog 
   ([blog-url] 
     (let 
       [json-template (json/read-json (slurp (clojure.java.io/resource template-path)))
-       blog-post-template (first (get-in json-template "data" "posts")) ]
+       blog-post-template (first (get-in json-template [:data :posts])) ]
     (jsonify-blog 
       blog-url 
-      (take 2 
+      (take 5 
         (html/select 
           (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a]))
       []
