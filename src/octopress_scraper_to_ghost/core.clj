@@ -15,12 +15,13 @@
         time-published (first(html/select (fetch-url blog-post-url) [:time]))
         body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]
      { 
-       :heading (html/text heading)
-       :publish-time (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published)))
-       :html-content (apply str (html/emit* body))}))
+       :title (html/text heading)
+       :slug (html/text heading)
+       :published_at (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published)))
+       :html (apply str (html/emit* body))}))
 
 (defn jsonify-blog 
-  ([blog-url] (jsonify-blog blog-url (take 1 (html/select (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a])) []))
+  ([blog-url] (jsonify-blog blog-url (take 2 (html/select (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a])) []))
   ([blog-url blog-post-links blog-content]
    (if (seq blog-post-links)
      (recur blog-url 
