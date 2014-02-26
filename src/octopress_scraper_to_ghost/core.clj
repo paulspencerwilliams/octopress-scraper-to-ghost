@@ -12,13 +12,14 @@
 (defn resolve-absolute [blog-url relative-a-tag]
   (str blog-url (:href (:attrs relative-a-tag))))
 
-(defn extract-blog-post [blog-post-url blog-post-template]
+(defn extract-blog-post [blog-post-url blog-post-template blog-post-id]
   (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
         time-published (first(html/select (fetch-url blog-post-url) [:time]))
         body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]  blog-post-template 
     (merge
       blog-post-template 
     { 
+     :id blog-post-id
      :title (html/text heading)
      :_meta_title (html/text heading)
      :slug (html/text heading)
@@ -33,20 +34,20 @@
        blog-post-template (first (get-in json-template [:data :posts])) ]
     (jsonify-blog 
       blog-url 
-      (take 5 
+      (take 1 
         (html/select 
           (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a]))
       []
-      blog-post-template)))
-  ([blog-url blog-post-links blog-content blog-post-template]
+      blog-post-template 1)))
+  ([blog-url blog-post-links blog-content blog-post-template blog-post-id]
    (if (seq blog-post-links)
      (recur blog-url 
        (rest blog-post-links)
        (conj  
          blog-content 
          (extract-blog-post 
-           (resolve-absolute blog-url (first blog-post-links)) blog-post-template))
-         blog-post-template)
+           (resolve-absolute blog-url (first blog-post-links)) blog-post-template blog-post-id))
+         blog-post-template (inc blog-post-id))
      blog-content)))
 
 
