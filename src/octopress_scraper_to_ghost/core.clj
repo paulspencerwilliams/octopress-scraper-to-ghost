@@ -1,6 +1,7 @@
 (ns octopress-scraper-to-ghost.core
   (:require [net.cgrand.enlive-html :as html]
             [clj-time.format :as date]
+            [clj-time.coerce]
             [clojure.data.json :as json]))
 
 (def archive-relative "/blog/archives")
@@ -15,6 +16,7 @@
 (defn extract-blog-post [blog-post-url blog-post-template blog-post-id]
   (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
         time-published (first(html/select (fetch-url blog-post-url) [:time]))
+        published-date (clj-time.coerce/to-long (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published))))
         body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]  blog-post-template 
     (merge
       blog-post-template 
@@ -23,7 +25,9 @@
      :title (html/text heading)
      :_meta_title (html/text heading)
      :slug (html/text heading)
-     :published_at (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published)))
+     :published_at published-date 
+     :updated_at published-date 
+     :created_at published-date 
      :html (apply str (html/emit* body))})
     ))
 
@@ -34,7 +38,7 @@
        blog-post-template (first (get-in json-template [:data :posts])) ]
     (jsonify-blog 
       blog-url 
-      (take 1 
+      (take 3 
         (html/select 
           (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a]))
       []
