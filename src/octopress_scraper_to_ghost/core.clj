@@ -37,7 +37,7 @@
      :updated_at published-date 
      :created_at published-date 
      :markdown markdown
-     :html html })))
+      })))
 
 (defn jsonify-blog 
   ([blog-url] 
