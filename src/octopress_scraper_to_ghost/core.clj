@@ -3,7 +3,8 @@
             [clj-time.format :as date]
             [clj-time.coerce]
             [clj-time.core :as core-date]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [clj-http.client :as client]))
 
 (def archive-relative "/blog/archives")
 (def template-path "ghost-import-template.json")
@@ -18,7 +19,13 @@
   (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
         time-published (first(html/select (fetch-url blog-post-url) [:time]))
         published-date (clj-time.coerce/to-long (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published))))
-        body (first (html/select (fetch-url blog-post-url) [:div.entry-content]))]  blog-post-template 
+        html (apply str (html/emit* (first 
+               (html/select (fetch-url blog-post-url) [:div.entry-content]))))
+        markdown (:body 
+                   (client/post "http://heckyesmarkdown.com/go/" 
+                     {:form-params {:html html :read 0}}))]  blog-post-template 
+
+
     (merge
       blog-post-template 
     { 
@@ -29,9 +36,8 @@
      :published_at published-date 
      :updated_at published-date 
      :created_at published-date 
-     :markdown "test test"
-     :html (apply str (html/emit* body))})
-    ))
+     :markdown markdown
+     :html html })))
 
 (defn jsonify-blog 
   ([blog-url] 

@@ -8,5 +8,5 @@
 (expect "ghost-json" 
         (jsonify-blog blog-url))
 
-(spit "/Users/will/output.jon" (jsonify-blog blog-url))
+(spit "/Users/will/Desktop/output.json" (jsonify-blog blog-url))
 
