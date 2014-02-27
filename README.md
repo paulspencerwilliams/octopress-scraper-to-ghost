@@ -1,14 +1,4 @@
-# octopress-scraper-to-ghost
+octopress-scraper-to-ghost
+==========================
 
-A Clojure library designed to ... well, that part is up to you.
-
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+My hacked attempt at scraping output from an Octopress blog into Ghost import format
