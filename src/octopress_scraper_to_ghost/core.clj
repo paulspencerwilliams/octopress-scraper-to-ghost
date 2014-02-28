@@ -39,11 +39,14 @@
      :markdown markdown
       })))
 
+(defn slurp-template []
+  (json/read-json (slurp (clojure.java.io/resource template-path))))
+
+
 (defn jsonify-blog 
   ([blog-url] 
     (let 
-      [json-template (json/read-json (slurp (clojure.java.io/resource template-path)))
-       blog-post-template (first (get-in json-template [:data :posts])) ]
+      [json-template (slurp-template)       blog-post-template (first (get-in json-template [:data :posts])) ]
       (json/write-str
       (merge
         json-template 
