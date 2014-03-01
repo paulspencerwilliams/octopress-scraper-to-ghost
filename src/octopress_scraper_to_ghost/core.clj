@@ -15,15 +15,26 @@
 (defn resolve-absolute [blog-url relative-a-tag]
   (str blog-url (:href (:attrs relative-a-tag))))
 
+(defn extract-heading [raw-html] 
+  (first (html/select raw-html [:article :h1])))
+
+(defn extract-date-published [raw-html]
+  (clj-time.coerce/to-long (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs (first(html/select raw-html [:time])))))))
+
+(defn extract-markdown [raw-html]
+  (:body 
+    (client/post 
+      "http://heckyesmarkdown.com/go/" 
+      {:form-params {:html
+        (apply str 
+          (html/emit* 
+            (first (html/select raw-html  [:div.entry-content])))) :read 0}})))
+
 (defn extract-blog-post [blog-post-url blog-post-template blog-post-id]
-  (let [heading (first (html/select (fetch-url blog-post-url) [:article :h1]))
-        time-published (first(html/select (fetch-url blog-post-url) [:time]))
-        published-date (clj-time.coerce/to-long (date/parse (date/formatters :date-time-no-ms) (:datetime (:attrs time-published))))
-        html (apply str (html/emit* (first 
-               (html/select (fetch-url blog-post-url) [:div.entry-content]))))
-        markdown (:body 
-                   (client/post "http://heckyesmarkdown.com/go/" 
-                     {:form-params {:html html :read 0}}))]  blog-post-template 
+  (let [raw-html (fetch-url blog-post-url)
+        heading (extract-heading  raw-html)
+        published-date (extract-date-published raw-html) 
+        markdown (extract-markdown raw-html) ]  blog-post-template 
 
 
     (merge
@@ -56,7 +67,7 @@
       {:data { :posts 
     (jsonify-blog 
       blog-url 
-      (take 5 
+      (take 1 
         (html/select 
           (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a]))
       []
