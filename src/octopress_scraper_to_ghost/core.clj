@@ -64,31 +64,39 @@
    { :exported_on (clj-time.coerce/to-long (core-date/now))
     :version "000" }} )
 
-(defn jsonify-post 
-  [blog-url blog-post-links blog-content blog-post-template blog-post-id]
+(defn extract-blog-post-template [whole-template]
+  (first (get-in whole-template [:data :posts])))
+
+(defn extract-blog-post-urls [blog-url]
+  (take 1 
+        (for 
+          [relative 
+           (html/select (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a])]
+          (str blog-url (:href (:attrs relative)))
+        )))
+
+(defn jsonify-posts 
+  ([blog-url blog-post-template]
+    (jsonify-posts
+    (extract-blog-post-urls blog-url)
+    []
+    blog-post-template
+    1))
+  ([blog-post-links blog-content blog-post-template blog-post-id]
   (if (seq blog-post-links)
-    (recur blog-url 
-           (rest blog-post-links)
+    (recur (rest blog-post-links)
            (conj  
              blog-content 
              (merge-post-sections-into-template
                blog-post-template  
                (extract-sections 
-                 (resolve-absolute blog-url (first blog-post-links)))blog-post-id))
+                 (first blog-post-links))blog-post-id))
            blog-post-template (inc blog-post-id))
-    blog-content))
+    blog-content)))
 
-(defn extract-blog-post-list [blog-url]
-  (take 1 
-        (html/select 
-          (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a]))
-  )
 
-(defn extract-blog-post-template [whole-template]
-  (first (get-in whole-template [:data :posts])))
 
-(defn jsonify-blog 
-  [blog-url] 
+(defn jsonify-blog [blog-url] 
   (let 
     [json-template (slurp-template)
      blog-post-template (extract-blog-post-template json-template) ]
@@ -97,11 +105,7 @@
         json-template 
         (generate-meta) 
         {:data { :posts 
-                (jsonify-post 
-                  blog-url 
-                  (extract-blog-post-list blog-url) 
-                  []
-                  blog-post-template 1)}}
+                (jsonify-posts blog-url blog-post-template)}}
         {:tags [] }{:posts_tag [] }))))
 
 
