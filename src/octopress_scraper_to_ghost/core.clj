@@ -30,25 +30,26 @@
           (html/emit* 
             (first (html/select raw-html  [:div.entry-content])))) :read 0}})))
 
-(defn extract-blog-post [blog-post-url blog-post-template blog-post-id]
-  (let [raw-html (fetch-url blog-post-url)
-        heading (extract-heading  raw-html)
-        published-date (extract-date-published raw-html) 
-        markdown (extract-markdown raw-html) ]  blog-post-template 
+(defn extract-sections [blog-post-url]
+  (let [raw-html (fetch-url blog-post-url)]
+    {:heading (html/text (extract-heading  raw-html))
+     :published-date (extract-date-published raw-html) 
+     :markdown (extract-markdown raw-html)}))  
 
-
+(defn merge-post-sections-into-template 
+  [blog-post-template post-sections blog-post-id]
     (merge
       blog-post-template 
-    { 
-     :id blog-post-id
-     :title (html/text heading)
-     :meta_title (html/text heading)
-     :slug (html/text heading)
-     :published_at published-date 
-     :updated_at published-date 
-     :created_at published-date 
-     :markdown markdown
-      })))
+      { 
+        :id blog-post-id
+        :title (:heading post-sections)
+        :meta_title (:heading post-sections)
+        :slug (:heading post-sections)
+        :published_at (:published-date post-sections)
+        :updated_at (:published-date post-sections)
+        :created_at (:published-date post-sections)
+        :markdown (:markdown post-sections)
+      }))
 
 (defn slurp-template []
   (json/read-json (slurp (clojure.java.io/resource template-path))))
@@ -79,8 +80,10 @@
        (rest blog-post-links)
        (conj  
          blog-content 
-         (extract-blog-post 
-           (resolve-absolute blog-url (first blog-post-links)) blog-post-template blog-post-id))
+         (merge-post-sections-into-template
+          blog-post-template  
+         (extract-sections 
+           (resolve-absolute blog-url (first blog-post-links))  )blog-post-id))
          blog-post-template (inc blog-post-id))
      blog-content)))
 
