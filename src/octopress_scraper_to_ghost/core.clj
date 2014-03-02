@@ -4,7 +4,8 @@
             [clj-time.coerce]
             [clj-time.core :as core-date]
             [clojure.data.json :as json]
-            [clj-http.client :as client]))
+            [clj-http.client :as client])
+  (:import [com.overzealous.remark Remark Options]))
 
 (def archive-relative "/blog/archives")
 (def template-path "ghost-import-template.json")
@@ -24,22 +25,16 @@
       (date/formatters :date-time-no-ms) 
       (:datetime (:attrs (first(html/select raw-html [:time])))))))
 
-(defn extract-markdown [raw-html]
-  (:body 
-    (client/post 
-      "http://heckyesmarkdown.com/go/" 
-      {:form-params
-       {:html
-        (apply str 
-               (html/emit* 
-                 (first (html/select raw-html  [:div.entry-content])))) 
-        :read 0}})))
+(defn extract-markdown-local [raw-html]
+  (let [opts (Options/markdown)]
+    (set! (.simpleLinkIds opts )true)
+    (.convertFragment (Remark. opts) (apply str (html/emit* (first (html/select raw-html [:div.entry-content])))))))
 
 (defn extract-sections [blog-post-url]
   (let [raw-html (fetch-url blog-post-url)]
     {:heading (html/text (extract-heading  raw-html))
      :published-date (extract-date-published raw-html) 
-     :markdown (extract-markdown raw-html)}))  
+     :markdown (extract-markdown-local raw-html)}))  
 
 (defn merge-post-sections-into-template 
   [blog-post-template post-sections blog-post-id]
