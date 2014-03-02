@@ -7,35 +7,34 @@
             [clj-http.client :as client])
   (:import [com.overzealous.remark Remark Options]))
 
-(def archive-relative "/blog/archives")
+(def archive-relative-path "/blog/archives")
 (def template-path "ghost-import-template.json")
 
-(defn fetch-url [url]
+(defn fetch-html [url]
   (html/html-resource (java.net.URL. url)))
 
-(defn resolve-absolute [blog-url relative-a-tag]
-  (str blog-url (:href (:attrs relative-a-tag))))
+(defn extract-element [raw-html path]
+  (first (html/select raw-html path)))
 
-(defn extract-heading [raw-html] 
-  (first (html/select raw-html [:article :h1])))
+(defn to-text [html-element] 
+  (html/text html-element))
 
-(defn extract-date-published [raw-html]
+(defn to-unix-epoch [html-element]
   (clj-time.coerce/to-long 
     (date/parse 
       (date/formatters :date-time-no-ms) 
-      (:datetime (:attrs (first(html/select raw-html [:time])))))))
+      (:datetime (:attrs html-element)))))
 
-(defn extract-markdown-local [raw-html]
+(defn to-markdown [html-element]
   (let [opts (Options/markdown)]
-    (set! (.simpleLinkIds opts )true)
-    (.convertFragment (Remark. opts) (apply str (html/emit* (first (html/select raw-html [:div.entry-content])))))))
+    (set! (.simpleLinkIds opts) true)
+    (.convertFragment (Remark. opts) (apply str(html/emit* html-element)))))
 
-(defn extract-sections [blog-post-url]
-  (let [raw-html (fetch-url blog-post-url)]
-    {:heading (html/text (extract-heading  raw-html))
-     :published-date (extract-date-published raw-html) 
-     :markdown (extract-markdown-local raw-html)}))  
-
+(defn extract-sections [post-url]
+  (let [raw-html (fetch-html post-url)]
+    {:heading (to-text (extract-element raw-html [:article :h1]))
+     :published-date (to-unix-epoch (extract-element raw-html [:time]))
+     :markdown (to-markdown (extract-element raw-html [:div.entry-content]))}))  
 (defn merge-post-sections-into-template 
   [blog-post-template post-sections blog-post-id]
   (merge
@@ -57,7 +56,7 @@
 (defn generate-meta []
   {:meta
    { :exported_on (clj-time.coerce/to-long (core-date/now))
-    :version "000" }} )
+    :version "000" }})
 
 (defn extract-blog-post-template [whole-template]
   (first (get-in whole-template [:data :posts])))
@@ -66,30 +65,28 @@
   (take 1 
         (for 
           [relative 
-           (html/select (fetch-url (str blog-url archive-relative)) [:div#blog-archives :a])]
+           (html/select (fetch-html (str blog-url archive-relative-path)) [:div#blog-archives :a])]
           (str blog-url (:href (:attrs relative)))
-        )))
+          )))
 
 (defn jsonify-posts 
   ([blog-url blog-post-template]
-    (jsonify-posts
-    (extract-blog-post-urls blog-url)
-    []
-    blog-post-template
-    1))
-  ([blog-post-links blog-content blog-post-template blog-post-id]
-  (if (seq blog-post-links)
-    (recur (rest blog-post-links)
-           (conj  
-             blog-content 
-             (merge-post-sections-into-template
-               blog-post-template  
-               (extract-sections 
-                 (first blog-post-links))blog-post-id))
-           blog-post-template (inc blog-post-id))
-    blog-content)))
-
-
+   (jsonify-posts
+     (extract-blog-post-urls blog-url)
+     []
+     blog-post-template
+     1))
+  ([remaining-post-urls jsonified-posts post-template post-id]
+   (if (seq remaining-post-urls)
+     (let [this-post (merge-post-sections-into-template
+                       post-template  
+                       (extract-sections 
+                         (first remaining-post-urls))post-id)]
+       (recur (rest remaining-post-urls)
+              (conj jsonified-posts this-post)
+              post-template
+              (inc post-id)))
+     jsonified-posts)))
 
 (defn jsonify-blog [blog-url] 
   (let 
@@ -102,6 +99,3 @@
         {:data { :posts 
                 (jsonify-posts blog-url blog-post-template)}}
         {:tags [] }{:posts_tag [] }))))
-
-
-
