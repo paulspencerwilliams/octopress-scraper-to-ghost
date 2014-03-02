@@ -3,6 +3,8 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :main octopress-scraper-to-ghost.core 
+
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [expectations "1.4.52"]
                  [enlive "1.1.5"]

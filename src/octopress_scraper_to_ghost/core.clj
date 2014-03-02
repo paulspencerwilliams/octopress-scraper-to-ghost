@@ -4,8 +4,10 @@
             [clj-time.coerce]
             [clj-time.core :as core-date]
             [clojure.data.json :as json]
-            [clj-http.client :as client])
-  (:import [com.overzealous.remark Remark Options]))
+            [clj-http.client :as client]
+            [clojure.java.io :as io])
+  (:import [com.overzealous.remark Remark Options])
+  (:gen-class :main true))
 
 (def archive-relative-path "/blog/archives")
 (def template-path "ghost-import-template.json")
@@ -20,10 +22,11 @@
   (html/text html-element))
 
 (defn to-unix-epoch [html-element]
+  (str
   (clj-time.coerce/to-long 
     (date/parse 
       (date/formatters :date-time-no-ms) 
-      (:datetime (:attrs html-element)))))
+      (:datetime (:attrs html-element))))))
 
 (defn to-markdown [html-element]
   (let [opts (Options/markdown)]
@@ -99,3 +102,9 @@
         {:data { :posts 
                 (jsonify-posts blog-url blog-post-template)}}
         {:tags [] }{:posts_tag [] }))))
+
+(defn -main
+    "The application's main function"
+    [& args]
+    (println args))
+
