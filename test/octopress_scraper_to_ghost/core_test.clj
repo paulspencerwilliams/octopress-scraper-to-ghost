@@ -6,8 +6,11 @@
         [net.cgrand.enlive-html :as html]))
 
 (def blog-url "http://thephotographic.me.uk")
+(def dummy-blog-post-template 
+  (extract-blog-post-template 
+    (slurp-template)))
 
-;; it can retrieve lists from archives
+;; it can retrieve  from archives
 
 ;; it can fetch html from urls
 (expect "a sample blog" 
@@ -52,6 +55,33 @@
      (extract-sections :dummy-url)
     ))
 
+;; can merge blog posts with template appropriately
+(expect {:status "published", 
+         :slug :dummy-heading, 
+         :featured 0, 
+         :meta_description nil, 
+         :updated_at 
+         :dummy-date, 
+         :created_by 1, 
+         :page 0, 
+         :updated_by 1, 
+         :image nil, 
+         :language "en_GB", 
+         :title :dummy-heading, 
+         :created_at :dummy-date, 
+         :markdown :dummy-markdown, 
+         :meta_title :dummy-heading, 
+         :published_by 1, 
+         :author_id 1, :id 123, 
+         :published_at :dummy-date}
+        (let [dummy-post-sections {:heading :dummy-heading 
+                                   :published-date :dummy-date 
+                                   :markdown :dummy-markdown} 
+              dummy-post-id 123 ] 
+          (merge-post-sections-into-template 
+            dummy-blog-post-template 
+            dummy-post-sections 
+            dummy-post-id))) 
 
 ;;(expect "ghost-json" (jsonify-blog blog-url))
 
