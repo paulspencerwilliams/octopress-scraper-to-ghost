@@ -4,6 +4,7 @@
         [clojure.data.json :as json]
         [clojure.java.io :as io]
         [net.cgrand.enlive-html :as html]))
+
 (def blog-url "http://thephotographic.me.uk")
 
 ;; it can retrieve lists from archives
@@ -39,6 +40,18 @@
             (html/html-snippet "<time datetime=\"2014-03-02T21:13:24+00:00\" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>") [:time])))
 
 ;; it can extract all sections
+(expect 
+  {:heading :dummy-heading 
+   :published-date :dummy-date 
+   :markdown :dummy-markdown}
+  (with-redefs [fetch-html (fn [a] :dummy-html)
+                extract-element (fn [b c] :dummy-element)
+                to-text (fn [d] :dummy-heading )
+                to-unix-epoch (fn [e] :dummy-date )
+                to-markdown (fn [f] :dummy-markdown )]
+     (extract-sections :dummy-url)
+    ))
+
 
 ;;(expect "ghost-json" (jsonify-blog blog-url))
 
