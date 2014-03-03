@@ -23,16 +23,22 @@
             (html/html-snippet "<html><title>element content</title</html>" )
             [:title])))
 
-;; it can get text out of elements
-(expect "element content"
-        (to-text 
-          (extract-element 
-            (html/html-snippet "<title>element content</title>") [:title])))
+(defn element-resource-with-content [content]
+  (first (html/select (html/html-snippet (str "<div>" content "</div>")) [:div])))
+;; it can get text out of elements including markdown
+(expect "element content" (to-text (element-resource-with-content "element content")))
+(expect "# heading #\n\n[search here..][1]\n\n\n[1]: http://www.google.com" 
+        (to-markdown 
+          (element-resource-with-content 
+            "<h1>heading</h1><a href=\"http://www.google.com\">search here..</a>")))
 
+;; it can get published times out of <time>
 (expect "1393794804000"
         (to-unix-epoch 
           (extract-element 
             (html/html-snippet "<time datetime=\"2014-03-02T21:13:24+00:00\" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>") [:time])))
+
+;; it can extract all sections
 
 ;;(expect "ghost-json" (jsonify-blog blog-url))
 
