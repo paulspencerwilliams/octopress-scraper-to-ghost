@@ -85,13 +85,42 @@
             dummy-post-id))) 
 
 ;; can slurp in json templates
-(expect {:meta {:exported_on "test", :version "000"}, :data {:posts [{:status "published", :featured 0, :meta_description nil, :created_by 1, :page 0, :updated_by 1, :image nil, :language "en_GB", :title "slug", :published_by 1, :author_id 1}], :tags [], :posts_tags []}} (slurp-template))
+(expect {:meta {:exported_on "test", :version "000"}, 
+         :data {:posts 
+                [{:status "published", 
+                  :featured 0, 
+                  :meta_description nil, 
+                  :created_by 1, 
+                  :page 0, 
+                  :updated_by 1, 
+                  :image nil, 
+                  :language "en_GB", 
+                  :title "slug", 
+                  :published_by 1, 
+                  :author_id 1}], :tags [], :posts_tags []}}
+        (slurp-template))
 
 ;; can generate metadata
 (expect {:meta {:exported_on 1393794804000, :version "000"}}
        (with-redefs 
          [core-date/now (fn [] (core-date/date-time 2014 03 02 21 13 24))]
          (generate-meta)))
+
+;; can extract blog post templates correctly
+(expect {:status "published", 
+         :featured 0, 
+         :meta_description nil, 
+         :created_by 1, 
+         :page 0, 
+         :updated_by 1, 
+         :image nil, 
+         :language "en_GB", 
+         :title "slug", 
+         :published_by 1, 
+         :author_id 1} 
+        (extract-blog-post-template
+          (json/read-json (slurp (clojure.java.io/resource template-path )))))
+
 
 
 ;;(expect "ghost-json" (jsonify-blog blog-url))
